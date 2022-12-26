@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::{Shr, Shl}};
 
 #[derive(Debug)]
 struct List {
@@ -85,4 +85,83 @@ fn test_map_iter() {
     for (k, v) in &scores{
         println!("{}:{:?}", k, v);
     }
+}
+
+
+
+#[derive(Debug)]
+pub struct u512([u64; 8]);
+
+impl Shl<usize> for u512 {
+    type Output = Self;
+
+    fn shl(self, shift: usize) -> Self::Output {
+        let u512(ref original) = self;
+        let mut ret = [0u64; 8];
+        let word_shift = shift / 64;
+        let bit_shift = shift % 64;
+
+        // shift
+        for i in word_shift..8 {
+            ret[i  - word_shift] = original[i] << bit_shift;
+        }
+        // carry
+        if bit_shift > 0 {
+            for i in word_shift+1..8 {
+                ret[i - 1 - word_shift] += original[i] >> (64 - bit_shift);
+            }
+        }
+        // AB,CD,EF,GH
+        // D0,F0,H0,00
+        // DE,FG,H0,00
+        u512(ret)
+    }
+}
+
+impl Shr<usize> for u512 {
+    type Output = u512;
+
+    fn shr(self, shift: usize) -> u512 {
+        let u512(ref original) = self;
+        let mut ret = [0u64; 8];
+        let word_shift = shift / 64;
+        let bit_shift = shift % 64;
+
+        // shift
+        for i in word_shift..8 {
+            ret[i] = original[i - word_shift] >> bit_shift;
+        }
+
+        // Carry
+        if bit_shift > 0 {
+            for i in word_shift+1..8 {
+                ret[i] += original[i - word_shift - 1] << (64 - bit_shift);
+            }
+        }
+
+        // AB,CD,EF,GH
+        // 00,0A,0C,0E
+        // DE,FG,H0,00
+        u512(ret)
+    }
+}
+
+#[test]
+fn test_u512() {
+    let mut a = u512([0u64;8]);
+    
+    a = a<<1;
+    a.0[7] |= 1;
+    println!("{:?}",a);
+    a = a<<1;
+    a.0[7] |= 1;
+    println!("{:?}",a);
+    a = a<<1;
+    a.0[7] |= 1;
+    println!("{:?}",a);
+    a = a<<1;
+    a.0[7] |= 1;
+    println!("{:?}",a);
+    a = a>>62;
+    println!("{:?}",a);
 }

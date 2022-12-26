@@ -7,7 +7,7 @@ mod unzipfile;
 
 fn main() {
     // 要压缩的文件名
-    let filename = "./bbe.txt";
+    let filename = "./1.gif";
 
     // 统计u8频率
     let u8_count_map = u8_count::get_u8_count_map(filename);

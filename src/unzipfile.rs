@@ -20,8 +20,8 @@ pub fn huffman_unzip(filename: &str) -> Result<String,String> {
                             .open(&new_file_name)
                             .unwrap();
 
-    const READ_BUFFER_SIZE: usize = 8;
-    const WRITE_BUFFER_SIZE: usize = 8;
+    const READ_BUFFER_SIZE: usize = 8 * 1024;
+    const WRITE_BUFFER_SIZE: usize = 8 * 1024;
 
     let mut read_buf = [0u8; READ_BUFFER_SIZE];
     let mut write_buf = [0u8; WRITE_BUFFER_SIZE];
@@ -88,9 +88,14 @@ pub fn huffman_unzip(filename: &str) -> Result<String,String> {
         // println!("{} {}",u8_data,path_len);
     }
 
-    // println!("======\n{:?}============\n", u8_path_map);
-
     let mut write_byte_index = 0;
+
+    let mut max_map_path_len = 0;
+    for (k, _) in &u8_path_map {
+        if k.len() > max_map_path_len {
+            max_map_path_len = k.len();
+        }
+    }
 
     let mut data = vec![];
     loop {
@@ -106,14 +111,12 @@ pub fn huffman_unzip(filename: &str) -> Result<String,String> {
                     _ => {
                         for i_u8 in &read_buf[..readlen] {
                             for k in (0..8).rev() {
+                                let mut cur_bit = false;
                                 if *i_u8 & (1<<k) == 1<<k {
-                                    data.push(true);
-                                } else {
-                                    data.push(false);
-                                }
-
-                                let found = u8_path_map.contains_key(&data);
-                                if found {
+                                    cur_bit = true;
+                                }                            
+                                data.push(cur_bit);
+                                if !cur_bit || data.len() == max_map_path_len {
                                     write_buf[write_byte_index] = u8_path_map[&data];
                                     write_byte_index += 1;
                                     if write_byte_index == WRITE_BUFFER_SIZE {
@@ -121,7 +124,7 @@ pub fn huffman_unzip(filename: &str) -> Result<String,String> {
                                         write_byte_index = 0;
                                     }
                                     data.clear();
-                                } 
+                                }
                             }
                         }
                     }

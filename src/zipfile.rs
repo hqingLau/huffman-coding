@@ -6,8 +6,8 @@ pub fn huffman_zip(huffman_tree: HuffmanTree, filename: &str) -> Result<String, 
     // println!("{:?}", huffman_tree.u8_path_map);
     // {104: [true, true], 10: [false], 105: [true, false]}
 
-    const READ_BUFFER_SIZE: usize = 8;
-    const WRITE_BUFFER_SIZE: usize = 8;
+    const READ_BUFFER_SIZE: usize = 8 * 1024;
+    const WRITE_BUFFER_SIZE: usize = 8 * 1024;
 
     assert!(WRITE_BUFFER_SIZE>=2); // 写缓冲不能太小，后面有些细节直接填充区缓冲区前几个u8
 
@@ -41,8 +41,10 @@ pub fn huffman_zip(huffman_tree: HuffmanTree, filename: &str) -> Result<String, 
 
     
     // let u8_path_map_string = format!("{:?}", huffman_tree.u8_path_map);
+
     let u8_path_map_string = stringify::stringify(&huffman_tree.u8_path_map);
     let u8_path_map_size = u8_path_map_string.len() as u16;
+    // println!("{}", u8_path_map_size);
     assert!(u8_path_map_size < 1<<13);
 
     // 先零填充前两个byte
